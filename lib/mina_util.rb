@@ -1,4 +1,5 @@
 require 'rails/generators'
+require 'mina_util/builder'
 require 'generators/mina_utils/install_generator'
 
 module MinaUtil

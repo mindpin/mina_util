@@ -1,7 +1,21 @@
 module MinaUtils
   class InstallGenerator < Rails::Generators::Base
+    def create_deploy_config
+      case self.behavior
+      when :invoke
+        name = ask("项目名称:")
+        domain = ask("服务器域名/网址:")
+        repository = ask("版本库地址:")
+        branch = ask("版本库分支(默认为master):")
+        create_file "config/deploy.rb",
+          MinaUtil::Builder.deploy_config(name ,domain, repository, branch)
+      when :revoke
+        create_file "config/deploy.rb", ""
+      end
+    end
+
     def create_unicorn_config
-      create_file "config/unicorn", <<-FILE
+      create_file "config/unicorn.rb", <<-FILE
 worker_processes 3
 preload_app true
 timeout 60
@@ -17,6 +31,8 @@ stdout_path("\#{app_path}/log/unicorn.log")
     end
 
     def create_deploy_sh
+      case self.behavior
+      when :invoke
       create_file "deploy/sh/function.sh", <<-FILE
 #! /usr/bin/env bash
 
@@ -122,6 +138,25 @@ exit 0
       FILE
 
       # TODO 设置权限
+      when :revoke
+        create_file "deploy/sh/function.sh", ""
+        create_file "deploy/sh/unicorn.sh", ""
+      end
+    end
+
+    # FIXME 应该写在config/deploy.rb里面
+    def config_mongoid
+      case self.behavior
+      when :invoke
+      p "=====mongoid配置===="
+      database = ask "mongoid database:"
+      host = ask "mongoid host(默认为localhost):"
+      port = ask "mongoid port(默认为27017):"
+      p MinaUtil::Builder.mongoid database, host, port
+      p "=====mongoid配置结束===="
+      when :revoke
+        #create_file "config/mongoid.yml", ""
+      end
     end
   end
 end
