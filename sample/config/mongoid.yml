@@ -1,0 +1,12 @@
+development:
+  sessions:
+    default:
+      database: mina_util_dev
+      hosts:
+        - localhost:27017
+test:
+  sessions:
+    default:
+      database: mina_util_test
+      hosts:
+        - localhost:27017
