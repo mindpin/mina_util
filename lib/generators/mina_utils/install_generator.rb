@@ -4,11 +4,12 @@ module MinaUtils
       case self.behavior
       when :invoke
         name = ask("项目名称:")
-        domain = ask("服务器域名/网址:")
+        domain = ask("服务器域名/IP:")
+        user = ask("服务器用户(默认为root):")
         repository = ask("版本库地址:")
         branch = ask("版本库分支(默认为master):")
         create_file "config/deploy.rb",
-          MinaUtil::Builder.deploy_config(name ,domain, repository, branch)
+          MinaUtil::Builder.deploy_config(name ,domain, repository, branch, user)
       when :revoke
         create_file "config/deploy.rb", ""
       end
@@ -144,19 +145,5 @@ exit 0
       end
     end
 
-    # FIXME 应该写在config/deploy.rb里面
-    def config_mongoid
-      case self.behavior
-      when :invoke
-      p "=====mongoid配置===="
-      database = ask "mongoid database:"
-      host = ask "mongoid host(默认为localhost):"
-      port = ask "mongoid port(默认为27017):"
-      p MinaUtil::Builder.mongoid database, host, port
-      p "=====mongoid配置结束===="
-      when :revoke
-        #create_file "config/mongoid.yml", ""
-      end
-    end
   end
 end

@@ -2,19 +2,22 @@ module MinaUtil
   class Builder
     cattr_accessor :project_name
 
-    def self.deploy_config name, domain, repository, branch
+    def self.deploy_config name, domain, repository, branch, user
       branch = "master" if branch.blank?
+      user = "master" if user.blank?
       <<-FILE
 require 'mina/bundler'
 require 'mina/rails'
 require 'mina/git'
+require 'rails/generators'
+require 'mina_util/builder'
 
 set :domain, '#{domain}'
 set :deploy_to, '/web/#{name}'
 set :current_path, 'current'
 set :repository, '#{repository}'
 set :branch, '#{branch}'
-set :user, 'root'
+set :user, '#{user}'
 set :term_mode, nil
 
 set :shared_paths, [
@@ -46,15 +49,19 @@ task :setup => :environment do
 
   queue! %[mkdir -p "\#{deploy_to}/shared/config"]
   queue! %[chmod g+rx,u+rwx "\#{deploy_to}/shared/config"]
-  queue! %[touch "\#{deploy_to}/shared/config/mongoid.yml"]
-  queue! %[touch "\#{deploy_to}/shared/config/secrets.yml"]
+
+  #queue! %[touch "\#{deploy_to}/shared/config/mongoid.yml"]
+  order = MinaUtil::Builder.ask_mongoid
+  queue! %[echo '\#{order}' > "\#{deploy_to}/shared/config/mongoid.yml"]
+
+  secrets = MinaUtil::Builder.ask_secrets
+  queue! %[echo '\#{secrets}' > "\#{deploy_to}/shared/config/secrets.yml"]
+
   queue! %[touch "\#{deploy_to}/shared/config/application.yml"]
 
   queue! %[mkdir -p "\#{deploy_to}/shared/log"]
   queue! %[chmod g+rx,u+rwx "\#{deploy_to}/shared/log"]
 
-  queue  %[echo "-----> Be sure to edit 'shared/config/mongoid.yml'."]
-  queue  %[echo "-----> Be sure to edit 'shared/config/secrets.yml'."]
   queue  %[echo "-----> Be sure to edit 'shared/config/application.yml'."]
 end
 
@@ -118,5 +125,66 @@ production:
       database: #{database}
       """
     end
+
+    def self.ask_mongoid
+      p "=====mongoid配置===="
+      database = ask "mongoid database:"
+      host = ask "mongoid host(默认为localhost):"
+      port = ask "mongoid port(默认为27017):"
+      mongoid database, host, port
+    end
+
+    def self.secrets secret
+      secret = SecureRandom.hex(32) if secret.blank?
+      """
+production:
+  secret_key_base: #{secret}
+      """
+    end
+
+    def self.ask_secrets
+      p "=====secrets配置===="
+      secrets ask "secrets(默认自动生成):"
+    end
+
+    protected
+    def self.ask(statement, *args)
+      options = args.last.is_a?(Hash) ? args.pop : {}
+      color = args.first
+
+      #if options[:limited_to]
+        #ask_filtered(statement, color, options)
+      #else
+        ask_simply(statement, color, options)
+      #end
+    end
+
+
+    def self.ask_simply(statement, color, options)
+      default = options[:default]
+      message = [statement, ("(#{default})" if default), nil].uniq.join(" ")
+      message = prepare_message(message, *color)
+      result = Thor::LineEditor.readline(message, options)
+
+      return unless result
+
+      result.strip!
+
+      if default && result == ""
+        default
+      else
+        result
+      end
+    end
+
+    def self.prepare_message(message, *color)
+      spaces = "  " * 0 #padding
+      spaces + set_color(message.to_s, *color)
+    end
+
+    def self.set_color(string, *args) #:nodoc:
+      string
+    end
+
   end
 end
