@@ -14,6 +14,8 @@ require 'mina_util/builder'
 
 set :domain, '#{domain}'
 set :deploy_to, '/web/#{name}'
+#test
+#set :deploy_to, '/home/dd/#{name}'
 set :current_path, 'current'
 set :repository, '#{repository}'
 set :branch, '#{branch}'
@@ -56,6 +58,11 @@ task :setup => :environment do
 
   secrets = MinaUtil::Builder.ask_secrets
   queue! %[echo '\#{secrets}' > "\#{deploy_to}/shared/config/secrets.yml"]
+
+  nginx = MinaUtil::Builder.ask_nginx('#{name}')
+  queue! %[echo '\#{nginx}' > "/etc/nginx/conf.d/#{name}.conf"]
+  #test
+  #queue! %[echo '\#{nginx}' > "/home/dd/#{name}.conf"]
 
   queue! %[touch "\#{deploy_to}/shared/config/application.yml"]
 
@@ -145,6 +152,44 @@ production:
     def self.ask_secrets
       p "=====secrets配置===="
       secrets ask "secrets(默认自动生成):"
+    end
+
+    def self.nginx(name, server_name)
+"""
+upstream #{name}_server {
+  server unix:/web/#{name}/current/tmp/sockets/unicorn.sock fail_timeout=0;
+}
+
+server {
+    listen       80;
+    server_name  #{server_name};
+    root /web/#{name}/current/public;
+    access_log  /var/log/nginx/#{name}.access.log  main;
+
+    location / {
+      try_files $uri @app;
+    }
+
+    location @app {
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header Host $http_host;
+      proxy_redirect off;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Scheme $scheme;
+
+      proxy_pass http://#{name}_server;
+   }
+
+
+}
+
+"""
+    end
+
+    def self.ask_nginx(name)
+      p "=====nginx配置===="
+      server_name = ask "访问域名，例(xx.4ye.me):"
+      nginx name, server_name
     end
 
     protected
