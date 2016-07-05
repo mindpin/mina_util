@@ -27,6 +27,7 @@ $ rails g mina_utils:install
 # 3. 服务器用户(默认为root):
 # 4. 版本库地址:
 # 5. 版本库分支(默认为master):
+# 6. 项目地址(默认为/web/#{project_name}):
 
 $ mina setup
 

@@ -2,9 +2,10 @@ module MinaUtil
   class Builder
     cattr_accessor :project_name
 
-    def self.deploy_config name, domain, repository, branch, user
+    def self.deploy_config name, domain, repository, branch, user, project_path#, nginx_name
       branch = "master" if branch.blank?
       user = "master" if user.blank?
+      project_path = "/web/#{name}" if project_path.blank?
       <<-FILE
 require 'mina/bundler'
 require 'mina/rails'
@@ -14,7 +15,7 @@ require 'mina_util/builder'
 require 'yaml'
 
 set :domain, '#{domain}'
-set :deploy_to, '/web/#{name}'
+set :deploy_to, '#{project_path}'
 #test
 #set :deploy_to, '/home/dd/#{name}'
 set :current_path, 'current'
