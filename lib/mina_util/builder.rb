@@ -77,8 +77,6 @@ task :setup => :environment do
 
   queue! %[mkdir -p "\#{deploy_to}/shared/log"]
   queue! %[chmod g+rx,u+rwx "\#{deploy_to}/shared/log"]
-
-  queue  %[echo "-----> Be sure to edit 'shared/config/application.yml'."]
 end
 
 desc "Deploys the current version to the server."
