@@ -11,6 +11,7 @@ require 'mina/rails'
 require 'mina/git'
 require 'rails/generators'
 require 'mina_util/builder'
+require 'yaml'
 
 set :domain, '#{domain}'
 set :deploy_to, '/web/#{name}'
@@ -65,6 +66,14 @@ task :setup => :environment do
   #queue! %[echo '\#{nginx}' > "/home/dd/#{name}.conf"]
 
   queue! %[touch "\#{deploy_to}/shared/config/application.yml"]
+  if File.exist? "config/application.yml.sample"
+    figaro = MinaUtil::Builder.ask_figaro
+    queue! %[echo '\#{figaro}' > "\#{deploy_to}/shared/config/application.yml"]
+  else
+    # 不处理
+    queue  %[echo "未在本地发现 'config/application.yml.sample'."]
+    queue  %[echo "略过figaro配置."]
+  end
 
   queue! %[mkdir -p "\#{deploy_to}/shared/log"]
   queue! %[chmod g+rx,u+rwx "\#{deploy_to}/shared/log"]
@@ -190,6 +199,25 @@ server {
       p "=====nginx配置===="
       server_name = ask "访问域名，例(xx.4ye.me):"
       nginx name, server_name
+    end
+
+    def self.ask_figaro
+      p "=====figaro配置===="
+      data = YAML::load(File.open("config/application.yml.sample"))
+      envs = []
+      envs << data.delete("test")
+      envs << data.delete("development")
+      envs << data.delete("production")
+      envs.each do |e|
+        data.merge! e unless e.nil?
+      end
+
+      output = ""
+      data.each do |k, v|
+        value = ask "#{k}(提示：#{v}):"
+        output += "#{k}: #{value}\r\n"
+      end
+      output
     end
 
     protected

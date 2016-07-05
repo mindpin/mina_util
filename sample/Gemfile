@@ -39,6 +39,7 @@ end
 gem 'mongoid', '~> 4.0.2'
 gem 'haml'
 gem "mina", "~>0.3.7"
+gem "figaro"
 
 gem 'play_auth', :github => 'mindpin/play_auth',
                  :tag => :latest
