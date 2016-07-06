@@ -28,6 +28,7 @@ $ rails g mina_utils:install
 # 4. 版本库地址:
 # 5. 版本库分支(默认为master):
 # 6. 项目地址(默认为/web/#{project_name}):
+# 7. nginx配置文件名称(默认为#{project_name}):
 
 $ mina setup
 

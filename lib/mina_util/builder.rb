@@ -2,10 +2,11 @@ module MinaUtil
   class Builder
     cattr_accessor :project_name
 
-    def self.deploy_config name, domain, repository, branch, user, project_path#, nginx_name
+    def self.deploy_config name, domain, repository, branch, user, project_path, nginx_name
       branch = "master" if branch.blank?
       user = "master" if user.blank?
       project_path = "/web/#{name}" if project_path.blank?
+      nginx_name = name if nginx_name.blank?
       <<-FILE
 require 'mina/bundler'
 require 'mina/rails'
@@ -16,8 +17,6 @@ require 'yaml'
 
 set :domain, '#{domain}'
 set :deploy_to, '#{project_path}'
-#test
-#set :deploy_to, '/home/dd/#{name}'
 set :current_path, 'current'
 set :repository, '#{repository}'
 set :branch, '#{branch}'
@@ -61,10 +60,10 @@ task :setup => :environment do
   secrets = MinaUtil::Builder.ask_secrets
   queue! %[echo '\#{secrets}' > "\#{deploy_to}/shared/config/secrets.yml"]
 
-  nginx = MinaUtil::Builder.ask_nginx('#{name}')
-  queue! %[echo '\#{nginx}' > "/etc/nginx/conf.d/#{name}.conf"]
+  nginx = MinaUtil::Builder.ask_nginx('#{nginx_name}', '#{project_path}')
+  queue! %[echo '\#{nginx}' > "/etc/nginx/conf.d/#{nginx_name}.conf"]
   #test
-  #queue! %[echo '\#{nginx}' > "/home/dd/#{name}.conf"]
+  #queue! %[echo '\#{nginx}' > "/home/dd/#{nginx_name}.conf"]
 
   queue! %[touch "\#{deploy_to}/shared/config/application.yml"]
   if File.exist? "config/application.yml.sample"
@@ -162,16 +161,16 @@ production:
       secrets ask "secrets(默认自动生成):"
     end
 
-    def self.nginx(name, server_name)
+    def self.nginx(name, server_name, project_path)
 """
 upstream #{name}_server {
-  server unix:/web/#{name}/current/tmp/sockets/unicorn.sock fail_timeout=0;
+  server unix:#{project_path}/current/tmp/sockets/unicorn.sock fail_timeout=0;
 }
 
 server {
     listen       80;
     server_name  #{server_name};
-    root /web/#{name}/current/public;
+    root #{project_path}/current/public;
     access_log  /var/log/nginx/#{name}.access.log  main;
 
     location / {
@@ -194,10 +193,10 @@ server {
 """
     end
 
-    def self.ask_nginx(name)
+    def self.ask_nginx(name, project_path)
       p "=====nginx配置===="
       server_name = ask "访问域名，例(xx.4ye.me):"
-      nginx name, server_name
+      nginx name, server_name, project_path
     end
 
     def self.ask_figaro
