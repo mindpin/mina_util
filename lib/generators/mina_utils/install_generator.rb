@@ -5,8 +5,8 @@ module MinaUtils
     def create_deploy_config
       case self.behavior
       when :invoke
-        name = ask("项目名称:")
-        domain = ask("服务器域名/IP:")
+        name = ask("项目名称(用于项目文件路径和配置文件命名，请使用英文火车式命名，比如 hello_world ):")
+        domain = ask("服务器域名/IP(用于 mina ssh 连接):")
         user = ask("服务器用户(默认为root):")
         repository = ask("版本库地址:")
         branch = ask("版本库分支(默认为master):")

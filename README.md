@@ -22,8 +22,8 @@ Or install it yourself as:
 
 ```shell
 $ rails g mina_utils:install
-# 1. 项目名称:
-# 2. 服务器域名/IP:
+# 1. 项目名称(用于项目文件路径和配置文件命名，请使用英文火车式命名，比如 hello_world ):
+# 2. 服务器域名/IP(用于 mina ssh 连接):
 # 3. 服务器用户(默认为root):
 # 4. 版本库地址:
 # 5. 版本库分支(默认为master):
@@ -33,7 +33,7 @@ $ rails g mina_utils:install
 $ mina setup
 
 # "=====mongoid配置===="
-# 1. mongoid database:
+# 1. mongoid database name(默认为 #{name}):
 # 2. mongoid host(默认为localhost):
 # 3. mongoid port(默认为27017):
 # "=====secrets配置===="

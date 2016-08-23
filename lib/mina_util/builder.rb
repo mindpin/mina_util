@@ -4,7 +4,7 @@ module MinaUtil
 
     def self.deploy_config name, domain, repository, branch, user, project_path, nginx_name
       branch = "master" if branch.blank?
-      user = "master" if user.blank?
+      user = "root" if user.blank?
       project_path = "/web/#{name}" if project_path.blank?
       nginx_name = name if nginx_name.blank?
       <<-FILE
@@ -54,7 +54,7 @@ task :setup => :environment do
   queue! %[chmod g+rx,u+rwx "\#{deploy_to}/shared/config"]
 
   #queue! %[touch "\#{deploy_to}/shared/config/mongoid.yml"]
-  order = MinaUtil::Builder.ask_mongoid
+  order = MinaUtil::Builder.ask_mongoid('#{name}')
   queue! %[echo '\#{order}' > "\#{deploy_to}/shared/config/mongoid.yml"]
 
   secrets = MinaUtil::Builder.ask_secrets
@@ -140,11 +140,13 @@ production:
       """
     end
 
-    def self.ask_mongoid
+    def self.ask_mongoid(name)
       p "=====mongoid配置===="
-      database = ask "mongoid database:"
+      database = ask "mongoid database name(默认为 #{name}):"
       host = ask "mongoid host(默认为localhost):"
       port = ask "mongoid port(默认为27017):"
+
+      database = name if database.blank?
       mongoid database, host, port
     end
 
